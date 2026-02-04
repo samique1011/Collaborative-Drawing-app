@@ -1,0 +1,19 @@
+{
+  "name": "@repo/config",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports" : {
+    "./config" : "./src/config.ts" 
+  } ,
+  "dependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
