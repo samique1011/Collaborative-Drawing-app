@@ -10,7 +10,11 @@ export default function userAuthentication(req : Request , res : Response , next
             })
         }
         else{
-            const result = userAuthenticationSchema.safeParse(req.headers.authorization);
+            const reqBody = {
+                token : req.headers.authorization , 
+                roomName : req?.body?.roomName
+            }
+            const result = userAuthenticationSchema.safeParse(reqBody);
             if(!result.success){
                 res.status(403).json({
                     msg : "Wrong token provided in the header"
@@ -21,6 +25,8 @@ export default function userAuthentication(req : Request , res : Response , next
             const decoded = jwt.verify(token , JWT_SECRET);
             //@ts-ignore
             req.userId = decoded.userId;
+            //@ts-ignore
+            req.username = decoded.userName;
             next();
         }  
     }catch(e){

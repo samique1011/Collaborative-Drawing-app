@@ -8,7 +8,8 @@ export const signUpSchema = z.object({
     password : z.string().min(5)
 })
 export const userAuthenticationSchema = z.object({
-    token : z.string()
+    token : z.string()  ,
+    roomName : z.string()
 })
 
 export const JWT_SECRET = "123123123"
