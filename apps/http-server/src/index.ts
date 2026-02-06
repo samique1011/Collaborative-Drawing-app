@@ -173,6 +173,28 @@ app.delete("/delete-room" , userAuthentication , async(req : Request , res  :Res
     }
 })
 
+app.get("/get-chats/:roomId" , userAuthentication , async(req : Request<{roomId : string}> , res : Response) => {
+    try{
+        const allChats = prisma.chat.findMany({
+            where : {
+                roomId : Number(req.params.roomId)
+            } , 
+            select : {
+                id : true , 
+                userId : true , 
+                message : true
+            }
+        })
+        res.status(200).json({
+            chats : allChats
+        })
+    }catch(e){
+        res.status(404).json({
+            msg : "Failed to get chats"
+        })
+    }
+})
+
 app.listen(port , () => {
     console.log("App is listening on port" + port);
 })
