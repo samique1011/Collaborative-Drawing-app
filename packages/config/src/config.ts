@@ -12,19 +12,39 @@ export const userAuthenticationSchema = z.object({
     roomName : z.string()
 })
 
-export const ChatMessageInputType = z.object({
-    type : z.enum(["join-room" , "info" , "chat" , "leave-room"]) , 
-    payload : z.union([
-        z.object({
-            text : z.string()
-        }) ,
-        z.object({
-            roomId : z.string()
-        }) ,
-        z.object({
-            info : z.string()
-        })
-    ])
+export const tokenSchema = z.object({
+  token : z.string()
 })
+
+export const ChatMessageInputType = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("join-room"),
+    payload: z.object({
+      roomId: z.string(),
+    }),
+  }),
+
+  z.object({
+    type: z.literal("chat"),
+    payload: z.object({
+      username : z.string(),
+      text: z.string(),
+    }),
+  }),
+
+  z.object({
+    type: z.literal("info"),
+    payload: z.object({
+      info: z.string(),
+    }),
+  }),
+
+  z.object({
+    type: z.literal("leave-room"),
+    payload: z.object({
+        roomId : z.string()
+    }), // or whatever you want here
+  }),
+]);
 
 export const JWT_SECRET = "123123123"

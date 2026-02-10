@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/config/config.ts","./src/controllers/checkuserauthorized.ts","./src/controllers/checkuserpresent.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/controllers/checkuserauthorized.ts","./src/controllers/checkuserpresent.ts"],"version":"5.9.2"}

@@ -14,19 +14,22 @@ export default function userAuthentication(req : Request , res : Response , next
                 token : req.headers.authorization , 
                 roomName : req?.body?.roomName
             }
+            console.log(reqBody);
             const result = userAuthenticationSchema.safeParse(reqBody);
             if(!result.success){
                 res.status(403).json({
-                    msg : "Wrong token provided in the header"
+                    msg : "Wrong input format"
                 })
                 return
             }
             const token = req.headers.authorization;
             const decoded = jwt.verify(token , JWT_SECRET);
             //@ts-ignore
+            console.log("Token after decoding = " + decoded.username);
+            //@ts-ignore
             req.userId = decoded.userId;
             //@ts-ignore
-            req.username = decoded.userName;
+            req.username = decoded.username;
             next();
         }  
     }catch(e){

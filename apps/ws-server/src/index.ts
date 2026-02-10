@@ -29,6 +29,7 @@ type ChatMessage = {
   | {
       type: "chat";
       payload: {
+        username : string
         text: string;
       };
     };
@@ -36,10 +37,15 @@ const ws = new WebSocketServer({port : 8080});
 let allSockets : allSocketsType[] = [];
 
 ws.on('connection' , function connection(socket , request){
+    try{
+    console.log(allSockets);
     const url = request.url;
     if(!url)    return;
 
+    console.log(url);
+
     const checkAuthorized = checkUserAuthorized(url);
+    console.log(checkAuthorized);
     if(!checkAuthorized){
         let sendMessage : InformationType = {
             type : "info" , 
@@ -53,7 +59,7 @@ ws.on('connection' , function connection(socket , request){
     }
     const username = checkAuthorized;
     
-    socket.on('message' ,  (msg) => {
+    socket.on('message' ,  async (msg) => {
         const result = ChatMessageInputType.safeParse(JSON.parse(msg.toString()));
         if(!result.success){
             socket.send(JSON.stringify({
@@ -62,7 +68,7 @@ ws.on('connection' , function connection(socket , request){
                     info : "WRONG_MESSAGE_TYPE"
                 }
             }))
-            return
+            return;
         }
         const message : ChatMessage  = JSON.parse(msg.toString());
         if(message.type == 'join-room'){
@@ -74,6 +80,7 @@ ws.on('connection' , function connection(socket , request){
                         info : "YOU_CANNOT_JOIN_ANOTHER_ROOM_AS_YOU_ARE_ALREADY_IN_ONE"
                     }
                 }));
+                return
             }
             else{
                 allSockets.push({
@@ -85,9 +92,11 @@ ws.on('connection' , function connection(socket , request){
                 const sendMessage : ChatMessage = {
                     type : "chat" , 
                     payload : {
+                        username : username ,
                         text : `${username} joined the room`
                     }
                 }
+
                 allSockets.forEach((obj : allSocketsType) => {
                     if(obj.roomId == message.payload.roomId){
                         obj.socket.send(JSON.stringify(sendMessage))
@@ -96,6 +105,7 @@ ws.on('connection' , function connection(socket , request){
             }
         }
         else if(message.type == 'leave-room'){
+            const roomId = message.payload.roomId;
             allSockets = allSockets.filter((x : allSocketsType) => {
                 return x.socket !== socket
             })
@@ -105,6 +115,21 @@ ws.on('connection' , function connection(socket , request){
                     info : "YOU_LEFT_THE_ROOM"
                 }
             }));
+
+            allSockets.forEach((x : allSocketsType) => {
+                if(x.roomId == roomId){
+                    x.socket.send(JSON.stringify({
+                    type : "chat" ,
+                    payload : {
+                        roomId : message.payload.roomId,
+                        username : username,
+                        text : `${username} just left the room`
+                    }
+                    }))
+                }
+                
+            })
+            
             socket.close();
         }
         else{
@@ -123,12 +148,12 @@ ws.on('connection' , function connection(socket , request){
                     }
                 }));
                 socket.close();
-                return
             }
 
             let sendMessage : ChatMessage = {
                 type : "chat" , 
                 payload : {
+                    username : username ,
                     text : message.payload.text
                 }
             }
@@ -137,8 +162,12 @@ ws.on('connection' , function connection(socket , request){
                     x.socket.send(JSON.stringify(sendMessage))
                 }
             }) 
+            
         }
     })
+    }catch(e){
+        console.log(e);
+    }
 
 })
 

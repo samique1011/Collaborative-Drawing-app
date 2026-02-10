@@ -6,8 +6,8 @@ import signinValidator from "./middlewares/signinValidator";
 import userAuthentication from "./middlewares/userAuthentication";
 import prisma from "@repo/db/db";
 import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import { JWT_SECRET } from "@repo/config/config";
+import jwt, { JwtPayload } from "jsonwebtoken"
+import { JWT_SECRET , tokenSchema } from "@repo/config/config";
 
 const app = express();
 app.use(express.json());
@@ -62,9 +62,12 @@ app.post("/signin" , signinValidator , async (req : Request , res : Response , n
                 password : true
             }
         })
+
+        console.log(user);
         
         if(user){
             const passwordCompareSuccess = await bcrypt.compare(password , user.password);
+            console.log(passwordCompareSuccess);
             if(passwordCompareSuccess){
                 const token = jwt.sign({username : username , userId : user.id} , JWT_SECRET);
                 res.status(200).json({
@@ -173,24 +176,119 @@ app.delete("/delete-room" , userAuthentication , async(req : Request , res  :Res
     }
 })
 
-app.get("/get-chats/:roomId" , userAuthentication , async(req : Request<{roomId : string}> , res : Response) => {
+app.post("/join-room" , userAuthentication , async (req : Request , res : Response) => {
     try{
-        const allChats = prisma.chat.findMany({
+        const roomName = req.body.roomName;
+        const roomExists = await prisma.room.findFirst({
             where : {
-                roomId : Number(req.params.roomId)
-            } , 
-            select : {
-                id : true , 
-                userId : true , 
-                message : true
+                name : roomName
+            } , select : {
+                id : true
             }
         })
+        if(!roomExists) throw new Error("ROOM_WITH_SUCH_NAME_DOESN'T_EXIST");
+        else{
+            //@ts-ignore
+            const userId = req.userId;
+            //@ts-ignore
+            const username = req.username;
+            //@ts-ignore
+            console.log("USer is" + req.username);
+            await prisma.chat.create({
+                data : {
+                    roomId : roomExists.id , 
+                    message : `${username} joined the room` , 
+                    userId : parseInt(userId)
+                }
+            })
+            res.status(200).json({
+                msg : "Room_joined_successfully_redirecting_in_3_seconds"
+            })
+        }
+    }catch(e){
+        //@ts-ignore
+        const msg = e.message;
+        console.log(e);
+        res.status(403).json({
+            msg : msg
+        })
+    }
+})
+
+app.post("/get-chats/:roomName" , userAuthentication , async(req : Request<{roomName : string}> , res : Response) => {
+    try{
+        const allChats = await prisma.room.findFirst({
+            where : {
+                name : req.params.roomName
+            } , 
+            select : {
+                id : true,
+                chat : {
+                    select : {
+                        id : true , 
+                        userId : true , 
+                        message : true , 
+                        user : {
+                            select : {
+                                username : true
+                            }
+                        }
+                    } , 
+                    take : 50
+                } ,
+                
+            }
+        })
+    
         res.status(200).json({
-            chats : allChats
+            chats : allChats?.chat
         })
     }catch(e){
         res.status(404).json({
             msg : "Failed to get chats"
+        })
+    }
+})
+
+app.post("/checkUserAuthenticated" , (req : Request , res : Response) => {
+    try{
+        const result = tokenSchema.safeParse(req.body);
+        if(!result.success) throw new Error("Invalid_request_body");
+        else{
+            const token = req.body.token;
+            const decoded = jwt.verify(token , JWT_SECRET);
+            res.status(200).json({
+                msg : (decoded as JwtPayload).username
+            })
+        }
+    }catch(e){
+        //@ts-ignore
+        const error = e.message;
+        res.status(403).json({
+            msg : error
+        })
+    }
+})
+
+app.post("/checkRoomExists" , async (req : Request , res : Response) => {
+    const roomName = req.body.roomName;
+    console.log(roomName);
+    const result = await prisma.room.findFirst({
+        where : {
+            name : roomName
+        }
+    })
+
+    console.log(result);
+
+    if(result){
+        res.status(200).json({
+            msg : "Exists"
+        })
+    }
+    else{
+        res.status(403).json({
+            msg : "Doesn't Exists"
         })
     }
 })
