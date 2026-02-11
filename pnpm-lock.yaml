@@ -135,6 +135,9 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      axios:
+        specifier: ^1.13.4
+        version: 1.13.4
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3

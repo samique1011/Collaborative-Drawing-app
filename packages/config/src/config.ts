@@ -16,6 +16,12 @@ export const tokenSchema = z.object({
   token : z.string()
 })
 
+export const saveChatSchema = z.object({
+  roomName : z.string() , 
+  text : z.string(),
+  token : z.string()
+})
+
 export const ChatMessageInputType = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("join-room"),

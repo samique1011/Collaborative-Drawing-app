@@ -32,7 +32,20 @@ export default function ChatBar(props: ChatBarProps) {
           },
         }),
       );
+
+
     }
+  }
+
+  function JoinRoomHandler(socket : WebSocket){
+    socket.send(
+          JSON.stringify({
+            type: "join-room",
+            payload: {
+              roomId: props.roomName,
+            },
+          }),
+        );
   }
 
   async function getRoomChats() {
@@ -89,24 +102,10 @@ export default function ChatBar(props: ChatBarProps) {
       console.log("socket sate", socket.readyState);
 
       if (socket.readyState) {
-        socket.send(
-          JSON.stringify({
-            type: "join-room",
-            payload: {
-              roomId: props.roomName,
-            },
-          }),
-        );
+        JoinRoomHandler(socket);
       } else {
         socket.onopen = () => {
-          socket.send(
-            JSON.stringify({
-              type: "join-room",
-              payload: {
-                roomId: props.roomName,
-              },
-            }),
-          );
+          JoinRoomHandler(socket);
         };
       }
     };

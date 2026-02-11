@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/middlewares/signinvalidator.ts","./src/middlewares/signupvalidator.ts","./src/middlewares/userauthentication.ts"],"version":"5.9.2"}
+{"root":["./src/index.ts","./src/middlewares/savechatsmiddleware.ts","./src/middlewares/signinvalidator.ts","./src/middlewares/signupvalidator.ts","./src/middlewares/userauthentication.ts"],"version":"5.9.2"}

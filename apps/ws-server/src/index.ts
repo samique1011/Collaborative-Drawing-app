@@ -3,6 +3,7 @@ import type { WebSocket } from "ws";
 import checkUserAuthorized from "./controllers/checkUserAuthorized.js";
 import checkUserPresent from "./controllers/checkUserPresent.js";
 import { ChatMessageInputType } from "@repo/config/config";
+import axios from "axios";
 interface allSocketsType {
     socket : WebSocket , 
     username : string , 
@@ -43,6 +44,8 @@ ws.on('connection' , function connection(socket , request){
     if(!url)    return;
 
     console.log(url);
+    const queryParam = new URLSearchParams(url.split("?")[1]);
+    const token = queryParam.get('token') || "";
 
     const checkAuthorized = checkUserAuthorized(url);
     console.log(checkAuthorized);
@@ -97,8 +100,18 @@ ws.on('connection' , function connection(socket , request){
                     }
                 }
 
+                await axios.post("http://localhost:4000/save-chats" , {
+                    roomName : message.payload.roomId ,
+                    text : `${username} joined the room`
+                } , {
+                    headers : {
+                        Authorization : token
+                    }
+                })
+
+
                 allSockets.forEach((obj : allSocketsType) => {
-                    if(obj.roomId == message.payload.roomId){
+                    if(obj.roomId == message.payload.roomId && obj.socket !== socket){
                         obj.socket.send(JSON.stringify(sendMessage))
                     }
                 })
@@ -106,18 +119,18 @@ ws.on('connection' , function connection(socket , request){
         }
         else if(message.type == 'leave-room'){
             const roomId = message.payload.roomId;
-            allSockets = allSockets.filter((x : allSocketsType) => {
-                return x.socket !== socket
-            })
-            socket.send(JSON.stringify({
-                type : "info" , 
-                payload : {
-                    info : "YOU_LEFT_THE_ROOM"
-                }
-            }));
 
+            await axios.post("http://localhost:4000/save-chats" , {
+                    roomName : message.payload.roomId ,
+                    text : `${username} just left the room`
+                } , {
+                    headers : {
+                        Authorization : token
+                    }
+            })
+            
             allSockets.forEach((x : allSocketsType) => {
-                if(x.roomId == roomId){
+                if(x.roomId == roomId && x.socket !== socket){
                     x.socket.send(JSON.stringify({
                     type : "chat" ,
                     payload : {
@@ -129,6 +142,17 @@ ws.on('connection' , function connection(socket , request){
                 }
                 
             })
+
+            allSockets = allSockets.filter((x : allSocketsType) => {
+                return x.socket !== socket
+            })
+
+            socket.send(JSON.stringify({
+                type : "info" , 
+                payload : {
+                    info : "YOU_LEFT_THE_ROOM"
+                }
+            }));
             
             socket.close();
         }
@@ -157,6 +181,15 @@ ws.on('connection' , function connection(socket , request){
                     text : message.payload.text
                 }
             }
+
+            await axios.post("http://localhost:4000/save-chats" , {
+                    roomName : roomId ,
+                    text : message.payload.text
+                } , {
+                    headers : {
+                        Authorization : token
+                    }
+                })
             allSockets.forEach((x : allSocketsType) => {
                 if(x.roomId == roomId){
                     x.socket.send(JSON.stringify(sendMessage))

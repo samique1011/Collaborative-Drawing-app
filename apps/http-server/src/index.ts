@@ -8,6 +8,7 @@ import prisma from "@repo/db/db";
 import bcrypt from "bcrypt"
 import jwt, { JwtPayload } from "jsonwebtoken"
 import { JWT_SECRET , tokenSchema } from "@repo/config/config";
+import saveChatsMiddleware from "./middlewares/saveChatsMiddleware";
 
 const app = express();
 app.use(express.json());
@@ -289,6 +290,41 @@ app.post("/checkRoomExists" , async (req : Request , res : Response) => {
     else{
         res.status(403).json({
             msg : "Doesn't Exists"
+        })
+    }
+})
+
+app.post("/save-chats" , saveChatsMiddleware , async(req : Request , res : Response) => {
+    const roomName = req.body.roomName;
+    const text = req.body.text;
+    //@ts-ignore
+    const userId = req.userId
+
+    try{
+        const roomId = await prisma.room.findFirst({
+            where : {
+                name : roomName
+            } , select : {
+                id : true
+            }
+        })
+
+        if(!roomId) throw new Error("NO_ROOM_EXISTS");
+
+        await prisma.chat.create({
+            data : {
+                roomId : roomId?.id,
+                message : text ,
+                userId : parseInt(userId)
+            }
+        })
+
+        res.status(200).json({
+            msg : "Chat_inserted"
+        })
+    }catch(e : any){
+        res.status(403).json({
+            msg : e.message
         })
     }
 })
