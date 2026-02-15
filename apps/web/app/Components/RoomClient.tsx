@@ -5,6 +5,7 @@ import checkUserAuthenticated from "../../controllers/checkUserAuthenticated";
 import { useRouter } from "next/navigation";
 import CanvaComponent from "./CanvaComponent";
 import ChatBar from "./ChatBar";
+import Image from "next/image";
 
 interface RoomClientProps {
   roomName: string;
@@ -16,7 +17,7 @@ export default function RoomClient(props: RoomClientProps) {
   const socketRef = useRef<WebSocket>(null);
   const router = useRouter();
   const username = useRef<string>("");
-  const [isChatOpen , setChatOpen] = useState<boolean>(false);
+  const [isChatOpen , setChatOpen] = useState<boolean>(true);
 
   function leaveRoomHandler() {
     socketRef.current?.send(
@@ -78,10 +79,12 @@ export default function RoomClient(props: RoomClientProps) {
             </button>
           </div>
 
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden ">
             <CanvaComponent className={`${isChatOpen ? "w-[75%]" : "w-screen"} h-full bg-white border-r
             transition-all duration-300 ease-in-out
-            `} />
+            `}
+            roomName = {props.roomName}
+             />
 
             <ChatBar
               className={` ${isChatOpen ? "w-[25%]" : "w-0"} h-full bg-slate-50

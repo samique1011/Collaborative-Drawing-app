@@ -5,6 +5,7 @@ import checkUserAuthenticated from "../../../controllers/checkUserAuthenticated"
 import NavBar from "../../Components/NavBar";
 import CreateRoom from "../../Components/CreateRoom";
 import JoinRoom from "../../Components/JoinRoom";
+import Image from "next/image";
 
 type swtichType = "create_room" | "join_room";
 
@@ -27,10 +28,19 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div>
+    <div className="max-h-screen min-h-screen overflow-hidden">
       <NavBar userLoggedIn={userLoggedIn} setUserLoggedIn={setUserLoggedIn} />
-      <div className="w-screen h-screen bg-slate-100 flex items-center justify-center relative ">
-        <div className="w-[420px] bg-white rounded-2xl shadow-lg overflow-hidden h-[50%]">
+      <div className="w-full min-h-screen flex items-center justify-center relative ">
+        <div className="absolute inset-0 ">
+            <Image src={"/Gemini_Generated_Image_iaw8stiaw8stiaw8.png"}
+            fill
+            alt=""
+            quality={100}
+            className="object-cover opacity-20"
+            priority />
+        </div>
+        <div className="w-[420px] bg-white rounded-2xl shadow-lg overflow-hidden h-[50%] z-10">
+        <div>
           <div className="flex border-b ">
             <button className={`flex-1 py-3 text-sm font-semibold ${swtich == "create_room" ? "bg-slate-900 text-white" : "bg-white text-slate-900"} `} onClick={() => setSwitch("create_room")}>
               Create Room
@@ -41,6 +51,7 @@ export default function HomePage() {
           </div>
           <div className="p-6 space h-[82%] flex  items-center justify-center ">
             {swtich == "create_room" ? <CreateRoom/> : <JoinRoom/>}
+          </div>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import bcrypt from "bcrypt"
 import jwt, { JwtPayload } from "jsonwebtoken"
 import { JWT_SECRET , tokenSchema } from "@repo/config/config";
 import saveChatsMiddleware from "./middlewares/saveChatsMiddleware";
+import ShapesAuth from "./middlewares/shapesAuth";
 
 const app = express();
 app.use(express.json());
@@ -321,6 +322,73 @@ app.post("/save-chats" , saveChatsMiddleware , async(req : Request , res : Respo
 
         res.status(200).json({
             msg : "Chat_inserted"
+        })
+    }catch(e : any){
+        res.status(403).json({
+            msg : e.message
+        })
+    }
+})
+
+app.post("/save-shapes" , userAuthentication , ShapesAuth , async (req : Request , res : Response) => {
+    try{
+        //@ts-ignore
+        const userId = req.userId;
+        const message = req.body.message;
+        const room = await prisma.room.findFirst({
+            where : {
+                name : req.body.roomName
+            } , 
+            select : {
+                id : true
+            }
+        })
+
+        if(!room)   throw new Error("ROOM_DOESN'T EXIST");
+
+        await prisma.shapes.create({
+            data : {
+                roomId : room?.id ,
+                userId : userId ,
+                message : message
+            }
+        })
+
+        res.status(200).json({
+            msg : "Shape saved successfully"
+        })
+    }catch(e : any){
+        res.status(403).json({
+            msg : e.message
+        })
+    }
+})
+
+app.post("/get-shapes" , userAuthentication , async (req : Request , res : Response) => {
+    try{
+        console.log("given the roomName " , req.body.roomName);
+        const room = await prisma.room.findFirst({
+            where : {
+                name : req.body.roomName
+            } , 
+            select : {
+                id : true
+            }
+        })
+
+        if(!room)   throw new Error("ROOM_DOESN'T EXIST");
+
+        const getShapes = await prisma.shapes.findMany({
+            where : {
+                roomId : room.id
+            } ,
+            select : {
+                message : true
+            }
+        })
+
+        res.status(200).json({
+            msg : getShapes
         })
     }catch(e : any){
         res.status(403).json({

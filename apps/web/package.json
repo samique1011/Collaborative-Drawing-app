@@ -12,11 +12,12 @@
   },
   "dependencies": {
     "@repo/config": "workspace:*",
+    "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/db" : "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.13.4",
+    "canvas": "^3.2.1",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.0",
     "postcss": "^8.5.6",
