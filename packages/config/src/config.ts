@@ -56,6 +56,12 @@ export const ChatMessageInputType = z.discriminatedUnion("type", [
         roomId : z.string()
     }), // or whatever you want here
   }),
+  z.object({
+    type : z.literal("draw") ,
+    payload : z.object({
+      text : z.string()
+    })
+  })
 ]);
 
 export const JWT_SECRET = "123123123"

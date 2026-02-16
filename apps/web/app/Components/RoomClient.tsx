@@ -84,6 +84,7 @@ export default function RoomClient(props: RoomClientProps) {
             transition-all duration-300 ease-in-out
             `}
             roomName = {props.roomName}
+            socketRef = {socketRef}
              />
 
             <ChatBar

@@ -33,6 +33,11 @@ type ChatMessage = {
         username : string
         text: string;
       };
+    } | {
+        type : "draw";
+        payload : {
+            text : string
+        }
     };
 const ws = new WebSocketServer({port : 8080});
 let allSockets : allSocketsType[] = [];
@@ -156,7 +161,7 @@ ws.on('connection' , function connection(socket , request){
             
             socket.close();
         }
-        else{
+        else if(message.type === "chat"){
             const chatText = message.payload.text;
             const roomId = (allSockets.find((x : allSocketsType) => {
                 if(x.socket === socket){
@@ -196,6 +201,38 @@ ws.on('connection' , function connection(socket , request){
                 }
             }) 
             
+        }
+        else{
+            //draw 
+            const drawText = message.payload.text;
+            const roomId = (allSockets.find((x : allSocketsType) => {
+                if(x.socket === socket){
+                    return x;
+                }
+            }))?.roomId
+
+            if(!roomId){
+                socket.send(JSON.stringify({
+                    type : "info" , 
+                    payload : {
+                        info : "YOU_ARE_NOT_PRESENT_IN_ANY_ROOM"
+                    }
+                }));
+                socket.close();
+            }
+
+            let sendMessage : ChatMessage = {
+                type : "draw" , 
+                payload : {
+                    text : drawText
+                }
+            }
+
+            allSockets.forEach((x : allSocketsType) => {
+                if(x.roomId == roomId){
+                    x.socket.send(JSON.stringify(sendMessage));
+                }
+            })
         }
     })
     }catch(e){

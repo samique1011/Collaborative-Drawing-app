@@ -1,11 +1,12 @@
 "use client";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import Draw from "../draw";
+import { Draw , drawExistingShapes } from "../draw";
 
 interface CanvaComponentProps {
   className: string;
   roomName: string;
+  socketRef : React.MutableRefObject<WebSocket | null>
 }
 export type ShapesType = "circle" | "rect";
 export type Shape =
@@ -29,6 +30,7 @@ export default function CanvaComponent(props: CanvaComponentProps) {
   // const [currShapeType , setcurrShapeType] = useState<ShapesType>("rect");
   const currShapeType = useRef<ShapesType>("rect");
   const ShapesDrawn = useRef<Shape[]>([]);
+  const [refresher , setRefresher] = useState<number>(0);
 
   async function getExistingShapes() {
     const init = async () => {
@@ -61,24 +63,42 @@ export default function CanvaComponent(props: CanvaComponentProps) {
     };
 
     await init();
+    //now create the websocket connection here and as the chatbar is doing the join-room handler , idont need to join-room again
+    
+    
     if (canvaRef.current) {
       let canvas = canvaRef.current;
       const ctx = canvaRef.current.getContext("2d");
       if (!ctx) {
         return;
       }
-      Draw(ctx, canvas, currShapeType, ShapesDrawn, props.roomName);
+      const socket = props.socketRef.current;
+      if(!socket){
+        return;
+      }
+      socket.onmessage = (msg) => {
+      const parsedMessage = JSON.parse(msg.data);
+      if(parsedMessage.type == "draw"){
+        const drawText = parsedMessage.payload.text;
+        const shape : Shape = JSON.parse(drawText);
+        ShapesDrawn.current.push(shape);
+        drawExistingShapes(ShapesDrawn , ctx , canvas)
+      }
+    }
+      Draw(ctx, canvas, currShapeType, ShapesDrawn, props.roomName , props.socketRef);
     }
   }
 
   console.log(currShapeType);
   useEffect(() => {
+    
     //a db call is to be made to get all the existing shapes drawn
     getExistingShapes();
     return () => {
         
     }
-  }, [canvaRef]);
+  }, [canvaRef ]);
+
 
   return (
     <div className={props.className}>

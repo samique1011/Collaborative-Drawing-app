@@ -1,6 +1,6 @@
 import type { Shape , ShapesType } from "../Components/CanvaComponent";
 import axios from "axios";
-export default function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvasElement , currShapeType : React.MutableRefObject<ShapesType> , ShapesDrawn : React.MutableRefObject<Shape[]>, roomName : string) {
+export  function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvasElement , currShapeType : React.MutableRefObject<ShapesType> , ShapesDrawn : React.MutableRefObject<Shape[]>, roomName : string , socketRef : React.MutableRefObject<WebSocket | null>) {
 
   let clicked = false;
   let startX = 0,   startY = 0;
@@ -18,16 +18,18 @@ export default function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvas
     clicked = false;
     //you finished drawing to save the 
     //based on the type i am going to push the element here
+    let currentShapeDrawn = {};
     if(currShapeType.current == "rect"){
         const width = e.clientX - startX;
         const height = e.clientY - startY;
-        ShapesDrawn.current.push({
+        currentShapeDrawn = {
             type : "rect",
             x : startX , 
             y : startY ,
             width : width,
-            height : height 
-        })
+            height : height
+        }
+        
     }
     else if(currShapeType.current == "circle"){
         const rect = canvas.getBoundingClientRect();
@@ -42,16 +44,18 @@ export default function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvas
         const radiusX = Math.abs(width) / 2;
         const radiusY = Math.abs(height) / 2;
 
-        ShapesDrawn.current.push({
+        currentShapeDrawn = {
             type : "circle" ,
             centerX : centerX ,
             centerY : centerY , 
             radiusX : radiusX , 
             radiusY : radiusY
-        })
+        }
     }
 
-    const ShapeMessage = JSON.stringify(ShapesDrawn.current[ShapesDrawn.current.length - 1]);
+    ShapesDrawn.current.push(currentShapeDrawn as Shape)
+    const ShapeMessage = JSON.stringify(currentShapeDrawn);
+
     await axios.post("http://localhost:4000/save-shapes" , {
         roomName : roomName ,
         message : ShapeMessage
@@ -61,6 +65,13 @@ export default function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvas
         }
     })
 
+    //i have to send it through the websocket connection, that i have drawn a shape
+    socketRef.current?.send(JSON.stringify({
+        type : "draw" , 
+        payload : {
+            text : ShapeMessage
+        }
+    }));
   });
 
   canvas.addEventListener("mousemove", (e : MouseEvent) => {
@@ -100,7 +111,7 @@ export default function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvas
     }});
 }
 
-function drawExistingShapes(ShapesDrawn :  React.MutableRefObject<Shape[]> , ctx : CanvasRenderingContext2D , canvas : HTMLCanvasElement){
+export function drawExistingShapes(ShapesDrawn :  React.MutableRefObject<Shape[]> , ctx : CanvasRenderingContext2D , canvas : HTMLCanvasElement){
     ctx.clearRect(0 , 0 , canvas.width , canvas.height);
     ShapesDrawn.current.map((obj : Shape) => {
         if(obj.type == 'rect'){
