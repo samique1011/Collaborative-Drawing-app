@@ -32,20 +32,18 @@ export default function ChatBar(props: ChatBarProps) {
           },
         }),
       );
-
-
     }
   }
 
-  function JoinRoomHandler(socket : WebSocket){
+  function JoinRoomHandler(socket: WebSocket) {
     socket.send(
-          JSON.stringify({
-            type: "join-room",
-            payload: {
-              roomId: props.roomName,
-            },
-          }),
-        );
+      JSON.stringify({
+        type: "join-room",
+        payload: {
+          roomId: props.roomName,
+        },
+      }),
+    );
   }
 
   async function getRoomChats() {
@@ -79,37 +77,40 @@ export default function ChatBar(props: ChatBarProps) {
 
   useEffect(() => {
     console.log("My username is", props.usernameRef.current);
+    const socket = props.socketRef.current;
+    function handleOnClose() {
+      alert("SOCKET_CLOSED");
+      router.push("/home");
+    }
+    function handleOnMessage(msg: MessageEvent) {
+      const parsedMessage = JSON.parse(msg.data);
+      console.log(parsedMessage);
+      if (parsedMessage.type === "chat") {
+        setMessages((x) => [...x, parsedMessage.payload]);
+      }
+    }
     const initSocket = async () => {
       await getRoomChats();
-      const socket = props.socketRef.current;
       if (!socket) {
         return;
       }
+      socket.addEventListener("close", handleOnClose);
+      socket.addEventListener("message", handleOnMessage);
+      console.log("socket state", socket.readyState);
 
-      socket.onclose = (event) => {
-        alert("SOCKET_CLOSED");
-        router.push("/home");
-      };
-
-      socket.onmessage = (msg) => {
-        const parsedMessage = JSON.parse(msg.data);
-        console.log(parsedMessage);
-        if (parsedMessage.type === "chat") {
-          setMessages((x) => [...x, parsedMessage.payload]);
-        }
-      };
-
-      console.log("socket sate", socket.readyState);
-
-      if (socket.readyState) {
+      if (socket.readyState === WebSocket.OPEN) {
         JoinRoomHandler(socket);
       } else {
-        socket.onopen = () => {
-          JoinRoomHandler(socket);
-        };
+        socket.addEventListener("open", () => JoinRoomHandler(socket), {
+          once: true,
+        });
       }
     };
     initSocket();
+    return () => {
+      socket?.removeEventListener("close", handleOnClose);
+      socket?.removeEventListener("message", handleOnMessage);
+    };
   }, []);
 
   return (

@@ -7,14 +7,7 @@ export  function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvasElement
   
   drawExistingShapes(ShapesDrawn , ctx , canvas);
 
-  canvas.addEventListener("mousedown", (e : MouseEvent) => {
-    clicked = true;
-    const rect = canvas.getBoundingClientRect();
-    startX = e.clientX - rect.x;
-    startY = e.clientY - rect.y;
-  });
-
-  canvas.addEventListener("mouseup", async (e : MouseEvent ) => {
+  async function mouseUpListener(e : MouseEvent){
     clicked = false;
     //you finished drawing to save the 
     //based on the type i am going to push the element here
@@ -72,10 +65,16 @@ export  function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvasElement
             text : ShapeMessage
         }
     }));
-  });
+  }
 
-  canvas.addEventListener("mousemove", (e : MouseEvent) => {
-    if (clicked) {
+  function mouseDownListener(e : MouseEvent){
+    clicked = true;
+    const rect = canvas.getBoundingClientRect();
+    startX = e.clientX - rect.x;
+    startY = e.clientY - rect.y;
+  }
+  function mouseMoveListener(e : MouseEvent){
+        if (clicked) {
         console.log(e.clientX + " " + e.clientY);
         if(currShapeType.current == "rect"){
             const width = e.clientX - startX;
@@ -108,7 +107,19 @@ export  function Draw(ctx : CanvasRenderingContext2D , canvas: HTMLCanvasElement
             ctx.ellipse(centerX , centerY , radiusX , radiusY , 0 , 0 , Math.PI * 2);
             ctx.stroke();  
         }
-    }});
+    }
+  }
+
+  canvas.addEventListener("mousemove", mouseMoveListener);
+  canvas.addEventListener("mouseup", mouseUpListener);
+  canvas.addEventListener("mousedown", mouseDownListener);
+
+  return () => {
+    canvas.removeEventListener("mousedown", mouseDownListener);
+    canvas.removeEventListener("mouseup", mouseUpListener);
+    canvas.removeEventListener("mousemove", mouseMoveListener);
+  }
+
 }
 
 export function drawExistingShapes(ShapesDrawn :  React.MutableRefObject<Shape[]> , ctx : CanvasRenderingContext2D , canvas : HTMLCanvasElement){

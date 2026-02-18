@@ -63,12 +63,9 @@ export default function CanvaComponent(props: CanvaComponentProps) {
     };
 
     await init();
-    //now create the websocket connection here and as the chatbar is doing the join-room handler , idont need to join-room again
-    
-    
     if (canvaRef.current) {
       let canvas = canvaRef.current;
-      const ctx = canvaRef.current.getContext("2d");
+      const ctx = canvaRef.current.getContext("2d") as CanvasRenderingContext2D;
       if (!ctx) {
         return;
       }
@@ -76,18 +73,40 @@ export default function CanvaComponent(props: CanvaComponentProps) {
       if(!socket){
         return;
       }
-      socket.onmessage = (msg) => {
-      const parsedMessage = JSON.parse(msg.data);
-      if(parsedMessage.type == "draw"){
-        const drawText = parsedMessage.payload.text;
-        const shape : Shape = JSON.parse(drawText);
-        ShapesDrawn.current.push(shape);
-        drawExistingShapes(ShapesDrawn , ctx , canvas)
+
+      function handleMessage(msg : MessageEvent){
+        const parsedMessage = JSON.parse(msg.data);
+        if(parsedMessage.type == "draw"){
+          const drawText = parsedMessage.payload.text;
+          const shape : Shape = JSON.parse(drawText);
+          ShapesDrawn.current.push(shape);
+          drawExistingShapes(ShapesDrawn , ctx , canvas)
+        }
+      }
+
+      socket.addEventListener("message" , handleMessage)
+
+      // socket.onmessage = (msg) => {
+      
+      // }
+        //Draw(ctx, canvas, currShapeType, ShapesDrawn, props.roomName , props.socketRef);
+        const cleanup = Draw(
+        ctx,
+        canvas,
+        currShapeType,
+        ShapesDrawn,
+        props.roomName,
+        props.socketRef
+      );
+
+      return () => {
+        socket.removeEventListener("message", handleMessage);
+        cleanup?.()
       }
     }
-      Draw(ctx, canvas, currShapeType, ShapesDrawn, props.roomName , props.socketRef);
-    }
   }
+
+  
 
   console.log(currShapeType);
   useEffect(() => {
@@ -97,7 +116,7 @@ export default function CanvaComponent(props: CanvaComponentProps) {
     return () => {
         
     }
-  }, [canvaRef ]);
+  }, [canvaRef , props.roomName]);
 
 
   return (
