@@ -81,7 +81,7 @@ export default function RoomClient(props: RoomClientProps) {
 
           <div className="flex flex-1 overflow-hidden ">
             <CanvaComponent className={`${isChatOpen ? "w-[75%]" : "w-screen"} h-full bg-white border-r
-            transition-all duration-300 ease-in-out
+            transition-all duration-300 ease-in-out overflow-hidden relative
             `}
             roomName = {props.roomName}
             socketRef = {socketRef}
