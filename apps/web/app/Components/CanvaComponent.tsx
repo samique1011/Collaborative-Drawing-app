@@ -104,6 +104,16 @@ export default function CanvaComponent(props: CanvaComponentProps) {
           ShapesDrawn.current.push(shape);
           drawExistingShapes(ShapesDrawn, ctx, canvas);
         }
+        else if(parsedMessage.type == "remove_draw"){
+          console.log("Remove_draw_message_came from websocket layer")
+          const removeDrawText = parsedMessage.payload.text;
+          const shape : Shape = JSON.parse(removeDrawText);
+          ShapesDrawn.current = ShapesDrawn.current.filter((x : Shape) => {
+            return JSON.stringify(x) !== JSON.stringify(shape);
+          })
+          console.log(ShapesDrawn.current);
+          drawExistingShapes(ShapesDrawn, ctx, canvas);
+        }
       }
       socket.addEventListener("message", handleMessage);
       resizeCanvas();
@@ -133,20 +143,17 @@ export default function CanvaComponent(props: CanvaComponentProps) {
   useEffect(() => {
     //a db call is to be made to get all the existing shapes drawn
     getExistingShapes();
-  }, [canvaRef, props.roomName]);
+  }, []);
 
   function undoOperation(){
-    // let canvas = canvaRef.current;
-    // if(!canvas) return;
-    // const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-    //   if (!ctx) {
-    //     return;
-    // }
-
-    // let poppedShape = ShapesDrawn.current.pop();
-    // console.log("popped" , poppedShape);
-    // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // drawExistingShapes(ShapesDrawn , ctx , canvas)
+    const poppedShape = ShapesDrawn.current[ShapesDrawn.current.length - 1];
+    console.log(poppedShape);
+    props.socketRef.current?.send(JSON.stringify({
+      type : "remove_draw" , 
+      payload : {
+        text : JSON.stringify(poppedShape)
+      }
+    }))
   }
 
   return (

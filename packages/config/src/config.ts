@@ -27,6 +27,11 @@ export const shapesSchema = z.object({
   message : z.string()
 })
 
+export const removeShapeSchema = z.object({
+  roomName : z.string() , 
+  message : z.string()
+})
+
 export const ChatMessageInputType = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("join-room"),
@@ -54,10 +59,16 @@ export const ChatMessageInputType = z.discriminatedUnion("type", [
     type: z.literal("leave-room"),
     payload: z.object({
         roomId : z.string()
-    }), // or whatever you want here
+    }), 
   }),
   z.object({
     type : z.literal("draw") ,
+    payload : z.object({
+      text : z.string()
+    })
+  }) , 
+  z.object({
+    type: z.literal("remove_draw") , 
     payload : z.object({
       text : z.string()
     })

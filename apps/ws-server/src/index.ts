@@ -38,6 +38,11 @@ type ChatMessage = {
         payload : {
             text : string
         }
+    } | {
+        type : "remove_draw";
+        payload : {
+            text : string
+        }
     };
 const ws = new WebSocketServer({port : 8080});
 let allSockets : allSocketsType[] = [];
@@ -200,9 +205,8 @@ ws.on('connection' , function connection(socket , request){
                     x.socket.send(JSON.stringify(sendMessage))
                 }
             }) 
-            
         }
-        else{
+        else if(message.type == "draw"){
             //draw 
             const drawText = message.payload.text;
             const roomId = (allSockets.find((x : allSocketsType) => {
@@ -234,10 +238,51 @@ ws.on('connection' , function connection(socket , request){
                 }
             })
         }
+        else{
+            //remove draw
+            const toBeRemoved = message.payload.text;
+            const roomId = (allSockets.find((x : allSocketsType) => {
+                if(x.socket === socket){
+                    return x;
+                }
+            }))?.roomId
+
+            if(!roomId){
+                socket.send(JSON.stringify({
+                    type : "info" , 
+                    payload : {
+                        info : "YOU_ARE_NOT_PRESENT_IN_ANY_ROOM"
+                    }
+                }));
+                socket.close();
+            }
+            
+            let sendMessage : ChatMessage = {
+                type : "remove_draw" , 
+                payload : {
+                    text : toBeRemoved
+                }
+            }
+
+            //delete this drawing before broadcasting it
+            await axios.put("http://localhost:4000/remove-shape" , {
+                roomName : roomId , 
+                message : toBeRemoved
+            } , {
+                headers : {
+                    Authorization : token
+                }
+            })
+
+            allSockets.forEach((x : allSocketsType) => {
+                if(x.roomId == roomId){
+                    x.socket.send(JSON.stringify(sendMessage))
+                }
+            })
+        }
     })
     }catch(e){
         console.log(e);
     }
-
 })
 

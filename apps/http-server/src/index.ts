@@ -10,6 +10,7 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import { JWT_SECRET , tokenSchema } from "@repo/config/config";
 import saveChatsMiddleware from "./middlewares/saveChatsMiddleware";
 import ShapesAuth from "./middlewares/shapesAuth";
+import removeShapeMiddleware from "./middlewares/removeShapeMiddleware";
 
 const app = express();
 app.use(express.json());
@@ -390,6 +391,39 @@ app.post("/get-shapes" , userAuthentication , async (req : Request , res : Respo
         res.status(200).json({
             msg : getShapes
         })
+    }catch(e : any){
+        res.status(403).json({
+            msg : e.message
+        })
+    }
+})
+
+app.put("/remove-shape" , userAuthentication , removeShapeMiddleware , async (req : Request , res : Response) => {
+    try{
+        const room = await prisma.room.findFirst({
+            where : {
+                name : req.body.roomName
+            } , 
+            select : {
+                id : true
+            }
+        })
+
+        if(!room)   throw new Error("ROOM_DOESN'T_EXIST");
+
+        const deleteShapeMsg = req.body.message;
+
+        await prisma.shapes.deleteMany({
+            where : {
+                message : deleteShapeMsg , 
+                roomId : room.id
+            }
+        })
+
+        res.status(200).json({
+            msg : "Shape deleted"
+        })
+
     }catch(e : any){
         res.status(403).json({
             msg : e.message
