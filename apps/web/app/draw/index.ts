@@ -11,6 +11,7 @@ export function Draw(
   let clicked = false;
   let startX = 0,
     startY = 0;
+  let currentPath: {x: number, y: number}[] = [];
 
   drawExistingShapes(ShapesDrawn, ctx, canvas);
 
@@ -63,7 +64,7 @@ export function Draw(
         radiusX,
         radiusY,
       };
-    } else if (currShapeType.current == "line") {
+    } else if (currShapeType.current == "line" || currShapeType.current == "arrow") {
       const rect = canvas.getBoundingClientRect();
 
       const scaleX = canvas.width / rect.width;
@@ -73,11 +74,16 @@ export function Draw(
       const endY = (e.clientY - rect.top) * scaleY;
 
       currentShapeDrawn = {
-        type: "line",
+        type: currShapeType.current,
         startX: startX,
         startY: startY,
         endX: endX,
         endY: endY,
+      };
+    } else if (currShapeType.current == "pencil" || currShapeType.current == "eraser") {
+      currentShapeDrawn = {
+        type: currShapeType.current,
+        points: [...currentPath],
       };
     }
 
@@ -113,6 +119,11 @@ export function Draw(
     const rect = canvas.getBoundingClientRect();
     startX = e.clientX - rect.x;
     startY = e.clientY - rect.y;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const currX = (e.clientX - rect.left) * scaleX;
+    const currY = (e.clientY - rect.top) * scaleY;
+    currentPath = [{x: currX, y: currY}];
   }
   function mouseMoveListener(e: MouseEvent) {
     if (clicked) {
@@ -163,7 +174,7 @@ export function Draw(
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
-      } else if (currShapeType.current == "line") {
+      } else if (currShapeType.current == "line" || currShapeType.current == "arrow") {
         const rect = canvas.getBoundingClientRect();
 
         const scaleX = canvas.width / rect.width;
@@ -181,6 +192,42 @@ export function Draw(
         ctx.beginPath();
         ctx.moveTo(startX, startY); // start point
         ctx.lineTo(endX, endY); // end point
+        ctx.stroke();
+
+        if (currShapeType.current === "arrow") {
+          const headlen = 15;
+          const angle = Math.atan2(endY - startY, endX - startX);
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(endX - headlen * Math.cos(angle - Math.PI / 6), endY - headlen * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(endX - headlen * Math.cos(angle + Math.PI / 6), endY - headlen * Math.sin(angle + Math.PI / 6));
+          ctx.stroke();
+        }
+      } else if (currShapeType.current == "pencil" || currShapeType.current == "eraser") {
+        const rect = canvas.getBoundingClientRect();
+
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const currX = (e.clientX - rect.left) * scaleX;
+        const currY = (e.clientY - rect.top) * scaleY;
+
+        currentPath.push({x: currX, y: currY});
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawExistingShapes(ShapesDrawn, ctx, canvas);
+
+        ctx.strokeStyle = currShapeType.current === "eraser" ? "black" : "white";
+        ctx.lineWidth = currShapeType.current === "eraser" ? 10 : 2;
+
+        ctx.beginPath();
+        if (currentPath.length > 0) {
+          ctx.moveTo(currentPath[0]!.x, currentPath[0]!.y);
+          for (let i = 1; i < currentPath.length; i++) {
+            ctx.lineTo(currentPath[i]!.x, currentPath[i]!.y);
+          }
+        }
         ctx.stroke();
       }
     }
@@ -222,7 +269,7 @@ export function drawExistingShapes(
         Math.PI * 2,
       );
       ctx.stroke();
-    } else if (obj.type == "line") {
+    } else if (obj.type == "line" || obj.type == "arrow") {
       ctx.strokeStyle = "white";
       ctx.lineWidth = 2;
 
@@ -230,6 +277,29 @@ export function drawExistingShapes(
       ctx.moveTo(obj.startX, obj.startY);
       ctx.lineTo(obj.endX, obj.endY);
       ctx.stroke();
+
+      if (obj.type === "arrow") {
+        const headlen = 15;
+        const angle = Math.atan2(obj.endY - obj.startY, obj.endX - obj.startX);
+        ctx.beginPath();
+        ctx.moveTo(obj.endX, obj.endY);
+        ctx.lineTo(obj.endX - headlen * Math.cos(angle - Math.PI / 6), obj.endY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(obj.endX, obj.endY);
+        ctx.lineTo(obj.endX - headlen * Math.cos(angle + Math.PI / 6), obj.endY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+      }
+    } else if (obj.type == "pencil" || obj.type == "eraser") {
+      ctx.strokeStyle = obj.type === "eraser" ? "black" : "white";
+      ctx.lineWidth = obj.type === "eraser" ? 10 : 2;
+
+      if (obj.points && obj.points.length > 0) {
+        ctx.beginPath();
+        ctx.moveTo(obj.points[0]!.x, obj.points[0]!.y);
+        for (let i = 1; i < obj.points.length; i++) {
+          ctx.lineTo(obj.points[i]!.x, obj.points[i]!.y);
+        }
+        ctx.stroke();
+      }
     }
   });
 }

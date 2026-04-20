@@ -1,4 +1,4 @@
-import { Circle, Icon, LineChart, LineDotRightHorizontal, LineSquiggle, Minus, Pencil, RectangleHorizontal, Undo } from "lucide-react";
+import { ArrowRight, Circle, Eraser, Icon, LineChart, LineDotRightHorizontal, LineSquiggle, Minus, Pencil, RectangleHorizontal, Undo } from "lucide-react";
 
 interface TopBarProps {
   currShapeType: React.MutableRefObject<string>,
@@ -11,7 +11,9 @@ export default function TopBar(props: TopBarProps) {
             <Circle onClick={() => props.currShapeType.current = "circle"} className="hover:cursor-pointer"></Circle>
             <RectangleHorizontal onClick={() => props.currShapeType.current = "rect"} className="hover:cursor-pointer"/>
             <Minus onClick={() => props.currShapeType.current = "line" }/>
-            <Pencil className="hover:cursor-pointer"></Pencil>
+            <ArrowRight onClick={() => props.currShapeType.current = "arrow"} className="hover:cursor-pointer"/>
+            <Pencil onClick={() => props.currShapeType.current = "pencil"} className="hover:cursor-pointer"></Pencil>
+            <Eraser onClick={() => props.currShapeType.current = "eraser"} className="hover:cursor-pointer"></Eraser>
             <Undo onClick={props.onClickHandler}/>
         </div>
     </div>

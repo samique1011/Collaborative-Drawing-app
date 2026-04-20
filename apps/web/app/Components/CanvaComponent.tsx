@@ -10,7 +10,7 @@ interface CanvaComponentProps {
   roomName: string;
   socketRef: React.MutableRefObject<WebSocket | null>;
 }
-export type ShapesType = "circle" | "rect" | "line";
+export type ShapesType = "circle" | "rect" | "line" | "pencil" | "eraser" | "arrow";
 export type Shape =
   | {
       type: "rect";
@@ -31,6 +31,18 @@ export type Shape =
       startY : number , 
       endX : number ,
       endY : number
+    } | {
+      type: "pencil",
+      points: {x: number, y: number}[]
+    } | {
+      type: "eraser",
+      points: {x: number, y: number}[]
+    } | {
+      type: "arrow",
+      startX: number,
+      startY: number,
+      endX: number,
+      endY: number
     };
 
 export default function CanvaComponent(props: CanvaComponentProps) {
